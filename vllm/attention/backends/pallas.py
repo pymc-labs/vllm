@@ -65,6 +65,7 @@ class PallasMetadata(AttentionMetadata):
     # or all decoding.
     block_tables: Optional[torch.Tensor] = None
     context_lens: Optional[torch.Tensor] = None
+    effective_query_lens: Optional[torch.Tensor] = None
 
     @property
     def prefill_metadata(self) -> Optional["PallasMetadata"]:
@@ -223,6 +224,7 @@ class PallasAttentionBackendImpl(AttentionImpl):
                     value_cache,
                     attn_metadata.context_lens,
                     attn_metadata.block_tables,
+                    attn_metadata.effective_query_lens,
                     num_kv_pages_per_compute_block,
                     num_queries_per_compute_block,
                     use_kernel=True,

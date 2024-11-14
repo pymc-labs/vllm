@@ -316,7 +316,6 @@ class TPUModelRunner(ModelRunnerBase[ModelInputForTPU]):
 
             prompt_len = len(prompt_tokens)
             prompt_lens.append(prompt_len)
-            print(prompt_len)
 
             input_tokens.extend(prompt_tokens)
             input_positions.extend(range(num_computed_tokens, seq_len))
@@ -371,6 +370,7 @@ class TPUModelRunner(ModelRunnerBase[ModelInputForTPU]):
             multi_modal_placeholder_index_maps=None,
             block_tables=block_tables,
             context_lens=context_lens,
+            effective_query_lens=prompt_lens,
         )
         return input_tokens, input_positions, attn_metadata, prompt_lens
 
@@ -577,6 +577,8 @@ class TPUModelRunner(ModelRunnerBase[ModelInputForTPU]):
             orig_slot_mapping = model_input.attn_metadata.slot_mapping
             orig_block_tables = model_input.attn_metadata.block_tables
             orig_context_lens = model_input.attn_metadata.context_lens
+            orig_effective_query_lens = \
+                model_input.attn_metadata.effective_query_lens
             batch_size = model_input.input_lens.shape[0]
             start_idx = 0
             next_token_ids = []
@@ -600,10 +602,12 @@ class TPUModelRunner(ModelRunnerBase[ModelInputForTPU]):
                         self.device)
                     attn_metadata.block_tables = orig_block_tables[
                         i].unsqueeze(0).to(self.device)
-                    print(orig_context_lens)
+                    attn_metadata.effective_query_lens = \
+                        orig_effective_query_lens[i:i + 1].to(self.device)
                 else:
                     attn_metadata.context_lens = None
                     attn_metadata.block_tables = None
+                    attn_metadata.effective_query_lens = None
                 input_lens = model_input.input_lens[i:i + 1].to(self.device)
                 t = model_input.t[i:i + 1].to(self.device)
                 p = model_input.p[i:i + 1].to(self.device)
